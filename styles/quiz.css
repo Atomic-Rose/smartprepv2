@@ -1,0 +1,109 @@
+/* Lesson view: sticky top rail, one question, divided answers, sticky continue bar. */
+.lesson { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+
+.lesson-top { position: sticky; top: 0; z-index: 2; background: var(--canvas); }
+.lesson-top-inner {
+  width: var(--lesson); margin-inline: auto; height: 60px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px;
+}
+.lesson-exit { margin-left: -12px; padding-inline: 10px; font-size: var(--fs-14); }
+.rail { height: 4px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.rail-fill { display: block; height: 100%; width: 0; background: var(--ink); border-radius: inherit; transition: width var(--t-progress) var(--ease); }
+.lesson-count { font-size: var(--fs-14); font-weight: 650; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.lesson-body { flex: 1; width: var(--lesson); margin-inline: auto; padding: clamp(24px, 7vh, 72px) 0 48px; }
+.lesson-body.is-leaving { opacity: 0; transition: opacity 110ms ease; }
+.lesson-body.is-entering { animation: fade-up 180ms var(--ease) both; }
+
+.lesson-kicker { margin-bottom: 14px; font-size: var(--fs-14); font-weight: 650; color: var(--ink-3); }
+.lesson-q {
+  margin-bottom: clamp(24px, 4vh, 40px);
+  font: 750 var(--fs-q)/1.2 var(--font-display); letter-spacing: -.025em;
+  text-wrap: pretty; overflow-wrap: anywhere;
+}
+
+/* Answers: a list with dividers, not cards. The top padding reserves room for the
+   feedback flag, so marking an answer never changes row height. */
+.choices { list-style: none; padding: 0; border-top: 1px solid var(--line); }
+.choices li { border-bottom: 1px solid var(--line); }
+.choice {
+  position: relative; width: 100%; min-height: 76px;
+  display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: center; column-gap: 16px;
+  padding: 24px 14px 20px; border: 0; background: transparent; text-align: left;
+  font-size: var(--fs-18); line-height: 1.4; cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+.choice:hover:not(:disabled) { background: var(--hover); }
+.choice:active:not(:disabled) { background: var(--press); }
+.choice:disabled { cursor: default; }
+.choice:focus-visible { outline-offset: -3px; }
+.choice-key {
+  width: 32px; height: 32px; display: grid; place-items: center;
+  border: 1.5px solid var(--line-2); border-radius: 8px;
+  font-size: var(--fs-14); font-weight: 750; color: var(--ink-2);
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+.choice:hover:not(:disabled) .choice-key { border-color: var(--ink); color: var(--ink); }
+.choice-text { overflow-wrap: anywhere; }
+
+.choice-flag {
+  position: absolute; top: 6px; left: 62px;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 800; line-height: 14px; letter-spacing: .07em; text-transform: uppercase;
+  animation: fade-up 180ms var(--ease) both;
+}
+.choice-flag:empty { display: none; }
+.choice-flag .icon { width: 12px; height: 12px; }
+
+.choice.is-correct { background: var(--correct-bg); }
+.choice.is-correct .choice-key { background: var(--correct); border-color: var(--correct); color: #fff; }
+.choice.is-correct .choice-flag { color: var(--correct); }
+.choice.is-wrong { background: var(--wrong-bg); }
+.choice.is-wrong .choice-key { background: var(--wrong); border-color: var(--wrong); color: #fff; }
+.choice.is-wrong .choice-flag { color: var(--wrong); }
+.choice.is-muted { color: var(--ink-3); }
+.choice.is-muted .choice-key { border-color: var(--line); color: var(--ink-3); }
+
+/* Explanation grows downward below the list (shared .collapse); nothing above it moves. */
+.explain-card { margin-top: 24px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-2); }
+.explain-text { color: var(--ink-2); }
+.explain-text strong { color: var(--ink); }
+.explain-ref { margin-top: 10px; font-size: var(--fs-14); font-weight: 700; }
+
+/* Continue bar: same place on every question, stays on screen while content scrolls. */
+.lesson-bar {
+  position: sticky; bottom: 0; z-index: 2;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.lesson-bar-inner {
+  width: var(--lesson); margin-inline: auto; min-height: 80px; padding-block: 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.lesson-status { min-width: 0; display: inline-flex; align-items: center; gap: 8px; font-weight: 750; color: var(--ink-3); }
+.lesson-status .icon { width: 20px; height: 20px; }
+.lesson-status.is-correct { color: var(--correct); }
+.lesson-status.is-wrong { color: var(--wrong); }
+.lesson-continue { min-width: 180px; justify-content: space-between; }
+
+/* Wide screens: question pinned on the left, answers and explanation on the right. */
+@media (min-width: 960px) {
+  .lesson-top-inner, .lesson-bar-inner, .lesson-body { width: var(--lesson-wide); }
+  .lesson-body {
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(48px, 6vw, 96px); align-items: start;
+    padding-top: clamp(40px, 9vh, 96px);
+  }
+  .lesson-prompt { position: sticky; top: calc(60px + 32px); }
+  .lesson-q { margin-bottom: 0; font-size: clamp(1.75rem, 1rem + 1.5vw, 2.5rem); line-height: 1.15; }
+}
+
+@media (max-width: 560px) {
+  .lesson-top-inner { height: 56px; gap: 12px; }
+  .choice { grid-template-columns: 28px minmax(0, 1fr); column-gap: 14px; padding: 24px 10px 18px; font-size: var(--fs-16); min-height: 72px; }
+  .choice-key { width: 28px; height: 28px; border-radius: 7px; }
+  .choice-flag { left: 52px; }
+  .lesson-bar-inner { min-height: 72px; padding-block: 12px; }
+  .lesson-status { font-size: var(--fs-14); }
+  .lesson-continue { min-width: 156px; }
+}

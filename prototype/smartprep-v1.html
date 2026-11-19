@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6f0">
+  <title>SmartPrep</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* Color */
+      --paper: #f7f6f0;
+      --card: #fcfbf6;
+      --ink: #182b24;
+      --muted: #526159;
+      --line: #d8ddd3;
+      --line-strong: #809388;
+      --green: #183a2f;
+      --green-hover: #21493b;
+      --light-green: #e7eee4;
+      --accent: #f3ce82;
+      --on-green: #fffdf5;
+      --right: #1f5c3f;
+      --right-bg: #e6efe5;
+      --right-line: #7aa489;
+      --wrong: #973923;
+      --wrong-bg: #f7e8e1;
+      --wrong-line: #cf9580;
+      --disabled-bg: #e5e7df;
+      --disabled-ink: #6b776f;
+      --focus: #9e591c;
+      /* Type scale */
+      --serif: Georgia, "Times New Roman", serif;
+      --fs-xs: .8125rem;
+      --fs-sm: .9375rem;
+      --fs-md: 1.0625rem;
+      --fs-q: clamp(1.375rem, 3.2vw, 1.8125rem);
+      --fs-h2: clamp(1.625rem, 3.6vw, 2.25rem);
+      --fs-display: clamp(2.75rem, 6.4vw, 4.75rem);
+      /* Shape + motion */
+      --r-sm: 10px;
+      --r-lg: 18px;
+      --ease: cubic-bezier(.2, .7, .2, 1);
+      --t-screen: 220ms;
+      font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--paper); color: var(--ink); -webkit-font-smoothing: antialiased; }
+    button { font: inherit; color: inherit; cursor: pointer; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    [tabindex="-1"]:focus { outline: none; }
+    .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    svg.i { width: 1em; height: 1em; flex: none; }
+
+    /* ---------- Shell ---------- */
+    .frame { width: min(1100px, calc(100% - 64px)); margin-inline: auto; }
+    .masthead {
+      min-height: 72px; display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+      border-bottom: 1px solid var(--line);
+    }
+    body[data-screen="quiz"] .masthead { display: none; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 1.125rem; font-weight: 740; letter-spacing: -.04em; }
+    .mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--green); color: var(--accent); }
+    .mark::before { content: ""; width: 11px; height: 6px; border-left: 2px solid; border-bottom: 2px solid; transform: translateY(-2px) rotate(-45deg); }
+    .course { font-size: var(--fs-sm); color: var(--muted); font-weight: 650; }
+
+    .screen { animation: screen-in var(--t-screen) var(--ease) both; }
+    @keyframes screen-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .eyebrow { margin: 0 0 8px; font-size: var(--fs-sm); font-weight: 650; color: var(--muted); }
+
+    /* ---------- Buttons: one primary, one secondary, one text ---------- */
+    .btn {
+      min-height: 52px; display: inline-flex; justify-content: center; align-items: center; gap: 10px;
+      padding: 12px 22px; border-radius: var(--r-sm); border: 1px solid transparent;
+      font-weight: 700; font-size: 1rem; line-height: 1.2; text-align: center;
+      transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 110ms ease;
+    }
+    .btn:active:not(:disabled) { transform: scale(.98); }
+    .btn-block { width: 100%; justify-content: space-between; text-align: left; }
+    .btn-primary { background: var(--green); color: var(--on-green); }
+    .btn-primary:hover:not(:disabled) { background: var(--green-hover); }
+    .btn-primary:disabled { background: var(--disabled-bg); color: var(--disabled-ink); cursor: default; }
+    .btn-secondary { background: var(--card); border-color: var(--line); color: var(--ink); }
+    .btn-secondary:hover { border-color: var(--line-strong); }
+    .link-btn {
+      display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 4px;
+      background: none; border: 0; border-radius: 6px; color: var(--muted); font-weight: 650; font-size: var(--fs-sm);
+      transition: color 150ms ease, transform 110ms ease;
+    }
+    .link-btn:hover { color: var(--ink); }
+    .link-btn:active { transform: scale(.97); }
+
+    /* ---------- Start ---------- */
+    .start {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+      grid-template-areas: "intro ." "list summary";
+      gap: 28px clamp(28px, 5vw, 64px);
+      padding-block: clamp(36px, 6vw, 72px) 72px;
+    }
+    .intro { grid-area: intro; }
+    .intro h1 { font: 400 var(--fs-display)/.95 var(--serif); letter-spacing: -.06em; margin: 0 0 16px; }
+    .intro p { margin: 0; color: var(--muted); font-size: var(--fs-md); max-width: 40ch; }
+    .chapters { grid-area: list; min-width: 0; }
+    .chapters h2 { margin: 0 0 12px; font-size: var(--fs-sm); font-weight: 700; color: var(--muted); }
+    .chapter-options { display: grid; gap: 10px; }
+    .chapter { position: relative; }
+    .chapter input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .chapter label {
+      display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 14px;
+      min-height: 64px; padding: 12px 16px;
+      border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card);
+      cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease, transform 110ms ease;
+    }
+    .chapter label:hover { border-color: var(--line-strong); }
+    .chapter label:active { transform: scale(.99); }
+    .chapter input:checked + label { background: var(--light-green); border-color: #7d9887; }
+    .chapter input:focus-visible + label { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .radio { width: 18px; height: 18px; border: 1.5px solid #61766a; border-radius: 50%; background: #fff; transition: border-width 150ms ease; }
+    .chapter input:checked + label .radio { border: 5px solid var(--green); }
+    .chapter-number { display: block; color: var(--muted); font-size: var(--fs-xs); }
+    .chapter-name { display: block; font-weight: 650; font-size: var(--fs-sm); line-height: 1.3; overflow-wrap: anywhere; }
+    .chapter-count { font-size: var(--fs-xs); color: var(--muted); white-space: nowrap; }
+
+    .summary {
+      grid-area: summary; align-self: start; position: sticky; top: 24px;
+      padding: 26px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card);
+    }
+    .summary h2 {
+      margin: 6px 0 22px; min-height: 2.3em;
+      font: 400 var(--fs-h2)/1.12 var(--serif); letter-spacing: -.035em; overflow-wrap: anywhere;
+    }
+    .summary h2.flash { animation: flash 180ms var(--ease); }
+    @keyframes flash { from { opacity: .2; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- Quiz ---------- */
+    .quiz { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+    .column { width: min(680px, calc(100% - 40px)); margin-inline: auto; }
+    .quiz-head { display: flex; align-items: center; gap: 16px; padding-block: 14px; }
+    .bar { flex: 1; height: 6px; border-radius: 99px; background: #e2e3d9; overflow: hidden; }
+    .bar span { display: block; height: 100%; width: 0; background: var(--green); border-radius: inherit; transition: width 420ms var(--ease); }
+    .count { font-size: var(--fs-sm); font-weight: 650; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+    .stage { flex: 1; padding: clamp(20px, 5vh, 52px) 0 40px; }
+    .stage.out { opacity: 0; transform: translateY(-4px); transition: opacity 120ms ease, transform 120ms ease; }
+    .stage.in { animation: screen-in 200ms var(--ease) both; }
+    .question {
+      margin: 0 0 28px; font-size: var(--fs-q); line-height: 1.25; font-weight: 650; letter-spacing: -.022em; text-wrap: pretty;
+    }
+    .answers { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+    .answer {
+      width: 100%; min-height: 60px;
+      display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; column-gap: 14px;
+      padding: 12px 16px; text-align: left;
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--r-sm);
+      font-size: 1rem; line-height: 1.38;
+      transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, color 200ms ease, transform 110ms ease;
+    }
+    .answer:hover:not(:disabled) { border-color: var(--line-strong); background: #fff; }
+    .answer:active:not(:disabled) { transform: scale(.99); }
+    .answer:disabled { cursor: default; color: inherit; }
+    .answer .text { overflow-wrap: anywhere; }
+    .letter {
+      display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+      border: 1.5px solid #8a9a90; font-weight: 700; font-size: var(--fs-xs); color: var(--muted);
+      transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+    }
+    .tag {
+      display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 99px;
+      font-size: var(--fs-xs); font-weight: 700; line-height: 1.4; color: #fff; white-space: nowrap;
+      animation: tag-in 200ms var(--ease) both;
+    }
+    @keyframes tag-in { from { opacity: 0; transform: translateX(-4px); } to { opacity: 1; transform: none; } }
+    .answer.is-wrong { background: var(--wrong-bg); border-color: var(--wrong-line); box-shadow: inset 0 0 0 1px var(--wrong-line); }
+    .answer.is-wrong .letter { background: var(--wrong); border-color: var(--wrong); color: #fff; }
+    .answer.is-wrong .tag { background: var(--wrong); }
+    .answer.is-right { background: var(--right-bg); border-color: var(--right-line); box-shadow: inset 0 0 0 1px var(--right-line); }
+    .answer.is-right .letter { background: var(--right); border-color: var(--right); color: #fff; }
+    .answer.is-right .tag { background: var(--right); }
+    .answer.is-dim { color: #5f6d64; }
+    .answer.is-dim .letter { border-color: #b4bfb7; color: #6b776f; }
+
+    .reveal { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 260ms var(--ease), opacity 220ms ease; }
+    .reveal.open { grid-template-rows: 1fr; opacity: 1; }
+    .reveal > div { overflow: hidden; min-height: 0; }
+    .explain { margin: 24px 0 0; padding-left: 16px; border-left: 3px solid var(--line); font-size: 1rem; line-height: 1.55; color: var(--muted); }
+    .explain strong { color: var(--ink); }
+    .slide-ref { display: block; margin-top: 6px; font-size: var(--fs-sm); font-weight: 650; color: var(--green); }
+
+    .quiz-foot { position: sticky; bottom: 0; background: var(--paper); border-top: 1px solid var(--line); }
+    .foot-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 84px; padding-block: 14px; }
+    .status { margin: 0; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--muted); }
+    .status.right { color: var(--right); }
+    .status.wrong { color: var(--wrong); }
+    .status svg { width: 20px; height: 20px; }
+    .btn-next { min-width: 200px; }
+
+    /* ---------- Results ---------- */
+    .results { padding: 36px 0 72px; }
+    .score { margin: 0 0 28px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; }
+    .score .big { font: 400 clamp(4.25rem, 13vw, 6.25rem)/.9 var(--serif); letter-spacing: -.06em; font-variant-numeric: lining-nums; }
+    .score .rest { font: 400 clamp(1.5rem, 4vw, 2rem)/1.1 var(--serif); color: var(--muted); letter-spacing: -.03em; }
+
+    .focus { padding: clamp(22px, 4vw, 32px); border-radius: var(--r-lg); background: var(--light-green); }
+    .focus h2 { margin: 0 0 10px; font: 400 var(--fs-h2)/1.1 var(--serif); letter-spacing: -.035em; }
+    .focus .why { margin: 0 0 22px; font-size: var(--fs-md); max-width: 58ch; }
+    .focus .note { margin: 10px 0 0; font-size: var(--fs-sm); color: var(--muted); }
+
+    .review { margin-top: 14px; }
+    .review-toggle {
+      width: 100%; min-height: 54px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      padding: 12px 18px; border-radius: var(--r-sm); background: var(--card); border: 1px solid var(--line);
+      font-weight: 680; text-align: left; transition: border-color 150ms ease, transform 110ms ease;
+    }
+    .review-toggle:hover { border-color: var(--line-strong); }
+    .review-toggle:active { transform: scale(.99); }
+    .chev { width: 18px; height: 18px; flex: none; transition: transform 220ms var(--ease); }
+    .review-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+    .items { list-style: none; margin: 0; padding: 10px 0 0; }
+    .focus + .items { margin-top: 14px; padding-top: 0; }
+    .items { display: grid; gap: 10px; }
+    .items li { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card); }
+    .items .q { margin: 0 0 10px; font-weight: 650; line-height: 1.38; }
+    .items dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: var(--fs-sm); }
+    .items dt { font-weight: 700; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .items dt.you { color: var(--wrong); }
+    .items dt.key { color: var(--right); }
+    .items dd { margin: 0; overflow-wrap: anywhere; }
+    .items .ref { margin: 8px 0 0; font-size: var(--fs-xs); color: var(--muted); }
+
+    .actions { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+    .separate { margin: -14px 0 28px; font-size: var(--fs-sm); color: var(--muted); }
+
+    @media (max-width: 760px) {
+      .frame { width: calc(100% - 32px); }
+      .masthead { min-height: 60px; }
+      .start { grid-template-columns: 1fr; grid-template-areas: "intro" "list" "summary"; gap: 22px; padding-block: 28px 40px; }
+      .summary { position: static; padding: 20px; }
+      .summary h2 { min-height: 0; margin-bottom: 16px; }
+      .column { width: calc(100% - 32px); }
+      .stage { padding-top: 16px; }
+      .question { margin-bottom: 22px; }
+      .results { padding-top: 22px; }
+    }
+    @media (max-width: 560px) {
+      .answer { grid-template-columns: 30px minmax(0, 1fr); padding: 12px 14px; column-gap: 12px; }
+      .answer .letter { grid-row: 1 / span 2; }
+      .answer .tag { grid-column: 2; justify-self: start; margin-top: 6px; }
+      .btn-next { min-width: 172px; padding-inline: 16px; }
+      .status { min-width: 0; font-size: var(--fs-sm); }
+      .foot-inner { min-height: 76px; }
+      .actions .btn { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body data-screen="start">
+  <header class="masthead frame">
+    <span class="brand"><span class="mark" aria-hidden="true"></span>SmartPrep</span>
+    <span class="course">CIS 3010-16</span>
+  </header>
+  <main id="app"></main>
+  <div class="vh" aria-live="polite" id="announcer"></div>
+
+  <script>
+  /* ---------- Sample data (local only) ---------- */
+  const CHAPTERS = [
+    {
+      number: 1, title: 'The Importance of MIS',
+      topics: {
+        tech:   { name: 'Technology and digital change', slides: [9] },
+        skills: { name: 'Skills and careers', slides: [15, 19],
+          // Fresh follow-up questions, used only for targeted practice.
+          practice: [
+            { q: 'Your project team keeps disagreeing about the approach. Giving and receiving critical feedback to reach a better result is which skill?',
+              choices: ['Abstract reasoning', 'Collaboration', 'Ability to experiment', 'Systems thinking'], answer: 1,
+              why: 'Collaboration is two or more people working toward a shared goal, and that includes giving and accepting critical feedback.', slides: 'Slides 15, 19' },
+            { q: 'Building a simplified model of a business problem that keeps the key elements and leaves out the noise is called…',
+              choices: ['Systems thinking', 'Ability to experiment', 'Abstract reasoning', 'Collaboration'], answer: 2,
+              why: 'Abstract reasoning is the ability to make and manipulate models. Systems thinking goes further and models how the parts interact.', slides: 'Slide 15' }
+          ] },
+        is:     { name: 'Information systems', slides: [31, 38, 39] },
+        data:   { name: 'Data and information quality', review: 'Reread how data differs from information.' }
+      },
+      questions: [
+        { topic: 'tech', q: 'The “point” of Moore’s Law is to…', choices: ['predict that computers will keep getting larger', 'understand that processing costs are rising', 'recognize that the cost of data processing is approaching zero', 'measure how quickly networks grow'], answer: 2,
+          why: 'Processing power keeps doubling, so the cost of processing data keeps falling toward zero.', slides: 'Slide 9' },
+        { topic: 'skills', q: 'In a job interview, Roy is asked to use a product he has never used before. Which skill is the interviewer testing?', choices: ['Abstract reasoning', 'Collaboration', 'Ability to experiment', 'Systems thinking'], answer: 2,
+          why: 'Working out an unfamiliar product on the spot is the ability to experiment.', slides: 'Slides 15, 19' },
+        { topic: 'skills', q: 'Modeling how a system’s parts connect, and predicting what changes when one part changes, is called…', choices: ['Abstract reasoning', 'Collaboration', 'Ability to experiment', 'Systems thinking'], answer: 3,
+          why: 'Systems thinking means modeling the components of a system and how they affect each other.', slides: 'Slide 15' },
+        { topic: 'is', q: 'Which is a critical responsibility of business professionals who use information systems?', choices: ['Protecting the security of the system and its data', 'Reprogramming the system to meet changing needs', 'Replacing the system’s hardware', 'Writing the system’s database code'], answer: 0,
+          why: 'Users are responsible for protecting access to the system and backing up their data.', slides: 'Slides 31, 38, 39' },
+        { topic: 'data', q: '________ is defined as recorded facts or figures.', choices: ['Information', 'Procedures', 'Software', 'Data'], answer: 3,
+          why: 'Data is recorded facts or figures. Information is what people conceive from that data.' }
+      ]
+    },
+    {
+      number: 2, title: 'Organizational Strategy, Information Systems, and Competitive Advantage',
+      topics: {
+        industry: { name: 'Industry structure', review: 'Reread the section on Porter’s five forces model.' },
+        strategy: { name: 'Competitive strategy', review: 'Reread the four competitive strategies: cost or differentiation, industry-wide or focused.' },
+        value:    { name: 'Value chains', review: 'Reread how primary and support activities differ in the value chain.' }
+      },
+      questions: [
+        { topic: 'industry', q: 'Porter’s five forces model is used to assess…', choices: ['an employee’s performance', 'an industry’s structure and profitability', 'a company’s IT budget', 'a product’s life cycle'], answer: 1,
+          why: 'The five forces describe how attractive and profitable an industry is.' },
+        { topic: 'industry', q: 'Which of these is one of Porter’s five forces?', choices: ['Employee turnover', 'Interest rates', 'Threat of substitute products', 'Brand awareness'], answer: 2,
+          why: 'Substitutes are one force, along with new entrants, buyer power, supplier power and rivalry.' },
+        { topic: 'strategy', q: 'A retailer that offers the lowest prices across its entire industry is using…', choices: ['focused differentiation', 'industry-wide differentiation', 'focused cost leadership', 'industry-wide cost leadership'], answer: 3,
+          why: 'Lowest prices across the whole market is industry-wide cost leadership.' },
+        { topic: 'value', q: 'Which is a primary activity in Porter’s value chain?', choices: ['Human resources', 'Outbound logistics', 'Technology development', 'Firm infrastructure'], answer: 1,
+          why: 'Outbound logistics is a primary activity. The other three are support activities.' },
+        { topic: 'strategy', q: 'Making it costly for customers to move to a competitor is called…', choices: ['creating high switching costs', 'differentiating the product', 'forming an alliance', 'reducing costs'], answer: 0,
+          why: 'High switching costs lock customers in and protect against rivals.' }
+      ]
+    },
+    {
+      number: 3, title: 'Business Intelligence Systems',
+      topics: {
+        process:   { name: 'The BI process', review: 'Reread the three BI activities: acquire data, perform analysis, publish results.' },
+        warehouse: { name: 'Data warehouses and marts', review: 'Reread how a data warehouse differs from a data mart.' },
+        analysis:  { name: 'Analysis techniques', review: 'Reread the examples of RFM and market-basket analysis.' }
+      },
+      questions: [
+        { topic: 'process', q: 'What are the three primary activities in the business intelligence process?', choices: ['Collect, store, delete', 'Acquire data, perform analysis, publish results', 'Plan, build, test', 'Input, process, output'], answer: 1,
+          why: 'BI systems acquire data, analyze it, and publish the results to the people who need them.' },
+        { topic: 'warehouse', q: 'The main job of a data warehouse is to…', choices: ['process daily sales transactions', 'host the company website', 'gather and clean data from many sources for analysis', 'back up employee email'], answer: 2,
+          why: 'A data warehouse pulls data from many sources, cleans it, and stores it for BI analysis.' },
+        { topic: 'warehouse', q: 'A data mart is…', choices: ['a smaller collection of data for one business function', 'an online store for buying data', 'a larger copy of the data warehouse', 'a spreadsheet of customer names'], answer: 0,
+          why: 'A data mart holds a subset of warehouse data prepared for a specific function, like marketing.' },
+        { topic: 'analysis', q: 'RFM analysis ranks customers by…', choices: ['region, field, and market', 'returns, feedback, and mentions', 'revenue, forecasts, and margins', 'recency, frequency, and money spent'], answer: 3,
+          why: 'RFM scores how recently, how often, and how much each customer buys.' },
+        { topic: 'analysis', q: 'Market-basket analysis is used to find…', choices: ['the cheapest supplier', 'products customers tend to buy together', 'the busiest store hours', 'which employees sell the most'], answer: 1,
+          why: 'It reveals items that are often purchased together, which supports cross-selling.' }
+      ]
+    }
+  ];
+
+  /* ---------- State ---------- */
+  const state = {
+    chapter: 0,          // selected chapter on the start screen
+    run: null,           // active quiz: { mode: 'chapter'|'practice'|'retry', chapter, topic, questions, picks, index }
+    chapterRun: null,    // last completed chapter run, kept separate from topic practice
+    busy: false
+  };
+  const app = document.getElementById('app');
+  const announcer = document.getElementById('announcer');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const L = ['A', 'B', 'C', 'D'];
+  const icon = {
+    x: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    check: '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+    arrow: '<span aria-hidden="true">→</span>',
+    back: '<span aria-hidden="true">←</span>'
+  };
+  const announce = msg => { announcer.textContent = ''; requestAnimationFrame(() => { announcer.textContent = msg; }); };
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+  function mount(html, screen, focusSel) {
+    document.body.dataset.screen = screen;
+    app.innerHTML = `<div class="screen">${html}</div>`;
+    window.scrollTo(0, 0);
+    const f = focusSel && app.querySelector(focusSel);
+    if (f) f.focus({ preventScroll: true });
+  }
+
+  /* ---------- Start ---------- */
+  function renderStart() {
+    const c = CHAPTERS[state.chapter];
+    mount(`
+      <div class="frame start">
+        <div class="intro">
+          <h1 id="page-title" tabindex="-1">Practice<br>by chapter.</h1>
+          <p>Answer five questions and find out exactly what to review before your exam.</p>
+        </div>
+        <section class="chapters" aria-labelledby="chapters-title">
+          <h2 id="chapters-title">Choose a chapter</h2>
+          <div class="chapter-options" role="radiogroup" aria-labelledby="chapters-title">
+            ${CHAPTERS.map((x, i) => `
+              <div class="chapter">
+                <input type="radio" name="chapter" id="chapter-${i}" value="${i}" ${i === state.chapter ? 'checked' : ''}>
+                <label for="chapter-${i}">
+                  <span class="radio" aria-hidden="true"></span>
+                  <span><span class="chapter-number">Chapter ${x.number}</span><span class="chapter-name">${x.title}</span></span>
+                  <span class="chapter-count">${plural(x.questions.length, 'question')}</span>
+                </label>
+              </div>`).join('')}
+          </div>
+        </section>
+        <aside class="summary" aria-labelledby="sel-title">
+          <p class="eyebrow" id="sel-meta">Chapter ${c.number} · ${plural(c.questions.length, 'question')}</p>
+          <h2 id="sel-title">${c.title}</h2>
+          <button class="btn btn-primary btn-block" type="button" data-action="start" aria-describedby="sel-meta sel-title">Start practice ${icon.arrow}</button>
+        </aside>
+      </div>`, 'start', '#page-title');
+  }
+
+  // State and text update synchronously; the animation is cosmetic only,
+  // so pressing Start right after choosing always opens the chapter shown.
+  function selectChapter(i) {
+    state.chapter = i;
+    const c = CHAPTERS[i];
+    const title = document.getElementById('sel-title');
+    document.getElementById('sel-meta').textContent = `Chapter ${c.number} · ${plural(c.questions.length, 'question')}`;
+    title.textContent = c.title;
+    if (!reduceMotion.matches) {
+      title.classList.remove('flash');
+      void title.offsetWidth;
+      title.classList.add('flash');
+    }
+  }
+
+  /* ---------- Quiz ---------- */
+  function startRun(run) {
+    state.run = { picks: [], index: 0, ...run };
+    state.busy = false;
+    renderQuiz();
+  }
+
+  function startChapter(i) {
+    state.chapter = i;
+    startRun({ mode: 'chapter', chapter: i, questions: CHAPTERS[i].questions });
+  }
+
+  function runLabel(run) {
+    const c = CHAPTERS[run.chapter];
+    if (run.mode === 'chapter') return `Chapter ${c.number}`;
+    const name = c.topics[run.topic].name;
+    return run.mode === 'practice' ? `Topic practice · ${name}` : `Retry missed questions · ${name}`;
+  }
+
+  function renderQuiz() {
+    const run = state.run, total = run.questions.length;
+    mount(`
+      <div class="quiz">
+        <header class="column quiz-head">
+          <button class="link-btn" type="button" data-action="exit">${icon.x} Exit</button>
+          <div class="bar" role="progressbar" aria-label="Questions answered" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="0"><span></span></div>
+          <span class="count"><span class="vh">Question </span><span id="q-num">1</span> of ${total}</span>
+        </header>
+        <div class="column stage" id="stage"></div>
+        <div class="quiz-foot">
+          <div class="column foot-inner">
+            <p class="status" id="status">Choose an answer</p>
+            <button class="btn btn-primary btn-next" type="button" id="next" data-action="next" disabled>Next question ${icon.arrow}</button>
+          </div>
+        </div>
+      </div>`, 'quiz');
+    fillQuestion();
+  }
+
+  function fillQuestion() {
+    const run = state.run, q = run.questions[run.index], total = run.questions.length;
+    const last = run.index === total - 1;
+    document.getElementById('stage').innerHTML = `
+      <p class="eyebrow">${runLabel(run)}</p>
+      <h1 class="question" id="q-text" tabindex="-1">${q.q}</h1>
+      <ul class="answers" aria-labelledby="q-text">
+        ${q.choices.map((t, i) => `
+          <li><button class="answer" type="button" data-action="pick" data-i="${i}">
+            <span class="letter" aria-hidden="true">${L[i]}</span><span class="text"><span class="vh">${L[i]}. </span>${t}</span>
+          </button></li>`).join('')}
+      </ul>
+      <div class="reveal" id="reveal"><div></div></div>`;
+    document.getElementById('q-num').textContent = run.index + 1;
+    const status = document.getElementById('status');
+    status.className = 'status';
+    status.textContent = 'Choose an answer';
+    const next = document.getElementById('next');
+    next.disabled = true;
+    next.innerHTML = `${last ? 'See results' : 'Next question'} ${icon.arrow}`;
+    document.getElementById('q-text').focus({ preventScroll: true });
+  }
+
+  function setProgress(done) {
+    const total = state.run.questions.length;
+    const bar = app.querySelector('.bar');
+    bar.setAttribute('aria-valuenow', done);
+    bar.firstElementChild.style.width = (done / total) * 100 + '%';
+  }
+
+  function pick(i) {
+    const run = state.run, q = run.questions[run.index];
+    if (run.picks[run.index] != null) return;
+    run.picks[run.index] = i;
+    const right = i === q.answer;
+
+    app.querySelectorAll('.answer').forEach((b, k) => {
+      b.disabled = true;
+      let tag = '';
+      if (k === q.answer) {
+        b.classList.add('is-right');
+        tag = right ? `${icon.check}Your answer · Correct` : `${icon.check}Correct answer`;
+      } else if (k === i) {
+        b.classList.add('is-wrong');
+        tag = `${icon.x}Your answer`;
+      } else {
+        b.classList.add('is-dim');
+      }
+      if (tag) b.insertAdjacentHTML('beforeend', `<span class="tag">${tag}</span>`);
+    });
+
+    setProgress(run.index + 1);
+
+    const status = document.getElementById('status');
+    status.className = 'status ' + (right ? 'right' : 'wrong');
+    status.innerHTML = right ? `${icon.check}Correct` : `${icon.x}Not quite`;
+
+    const ref = q.slides ? `<span class="slide-ref">Chapter ${CHAPTERS[run.chapter].number} · ${q.slides}</span>` : '';
+    const reveal = document.getElementById('reveal');
+    reveal.firstElementChild.innerHTML = `
+      <p class="explain"><strong>${right ? 'Correct.' : `The answer is ${L[q.answer]}.`}</strong> ${q.why}${ref}</p>`;
+    requestAnimationFrame(() => reveal.classList.add('open'));
+
+    const next = document.getElementById('next');
+    next.disabled = false;
+    next.focus({ preventScroll: true }); // keep the question in view; the footer is always on screen
+    announce(right ? `Correct. ${q.why}` : `Incorrect. The correct answer is ${L[q.answer]}, ${q.choices[q.answer]}. ${q.why}`);
+  }
+
+  function next() {
+    const run = state.run;
+    if (state.busy || run.picks[run.index] == null) return;
+    if (run.index === run.questions.length - 1) return finishRun();
+    run.index++;
+    const stage = document.getElementById('stage');
+    if (reduceMotion.matches) { fillQuestion(); window.scrollTo(0, 0); return; }
+    state.busy = true;
+    stage.classList.remove('in');
+    stage.classList.add('out');
+    setTimeout(() => {
+      fillQuestion();
+      window.scrollTo(0, 0);
+      stage.classList.remove('out');
+      void stage.offsetWidth;
+      stage.classList.add('in');
+      state.busy = false;
+    }, 120);
+  }
+
+  function exitQuiz() {
+    if (state.run.mode === 'chapter') renderStart();
+    else renderResults();
+  }
+
+  function finishRun() {
+    if (state.run.mode === 'chapter') {
+      state.chapterRun = state.run;
+      renderResults();
+    } else {
+      renderPracticeResults();
+    }
+  }
+
+  /* ---------- Analysis ---------- */
+  function missedOf(run) {
+    return run.questions.map((q, i) => ({ q, i, pick: run.picks[i] })).filter(m => m.pick !== m.q.answer);
+  }
+
+  function formatSlides(list) {
+    if (list.length === 1) return `slide ${list[0]}`;
+    if (list.length === 2) return `slides ${list[0]} and ${list[1]}`;
+    return `slides ${list.slice(0, -1).join(', ')}, and ${list[list.length - 1]}`;
+  }
+
+  function reviewLine(topic) {
+    return topic.slides ? `Review ${formatSlides(topic.slides)}.` : topic.review;
+  }
+
+  function analyze(run) {
+    const c = CHAPTERS[run.chapter];
+    const missed = missedOf(run);
+    const result = { c, missed, total: run.questions.length, correct: run.questions.length - missed.length };
+    if (!missed.length) return result;
+
+    const order = Object.keys(c.topics);
+    const stats = order.map(k => ({
+      k,
+      miss: missed.filter(m => m.q.topic === k).length,
+      total: run.questions.filter(q => q.topic === k).length
+    })).filter(s => s.miss);
+    // Most misses first, then the larger share of the topic missed, then chapter order.
+    stats.sort((a, b) => b.miss - a.miss || b.miss / b.total - a.miss / a.total || order.indexOf(a.k) - order.indexOf(b.k));
+    const top = stats[0], topic = c.topics[top.k];
+
+    const how = top.miss === top.total
+      ? (top.total === 1 ? 'the question' : top.total === 2 ? 'both questions' : `all ${top.total} questions`)
+      : `${top.miss} of ${top.total} questions`;
+    result.topicKey = top.k;
+    result.topic = topic;
+    result.sentence = `You missed ${how} on ${topic.name}. ${reviewLine(topic)}`;
+    result.fresh = topic.practice || [];
+    result.retry = missed.filter(m => m.q.topic === top.k).map(m => m.q);
+    return result;
+  }
+
+  /* ---------- Results ---------- */
+  function itemList(entries) {
+    return entries.map(m => `<li>
+      <p class="q">${m.q.q}</p>
+      <dl>
+        ${m.pick === m.q.answer
+          ? `<dt class="key">${icon.check}You</dt><dd>${L[m.pick]}. ${m.q.choices[m.pick]}</dd>`
+          : `<dt class="you">${icon.x}You</dt><dd>${L[m.pick]}. ${m.q.choices[m.pick]}</dd>
+             <dt class="key">${icon.check}Answer</dt><dd>${L[m.q.answer]}. ${m.q.choices[m.q.answer]}</dd>`}
+      </dl>
+      ${m.q.slides ? `<p class="ref">${m.q.slides}</p>` : ''}
+    </li>`).join('');
+  }
+
+  function renderResults() {
+    const a = analyze(state.chapterRun);
+    const c = a.c, idx = CHAPTERS.indexOf(c), nextCh = CHAPTERS[idx + 1];
+    let focus, actions, review = '';
+
+    if (a.missed.length) {
+      const note = a.fresh.length
+        ? `${plural(a.fresh.length, 'new question')} on this topic.`
+        : `Retry of the ${a.retry.length === 1 ? 'question' : plural(a.retry.length, 'question')} you missed. No new questions for this topic yet.`;
+      focus = `<section class="focus" aria-labelledby="review-topic">
+          <p class="eyebrow">Review next</p>
+          <h2 id="review-topic">${a.topic.name}</h2>
+          <p class="why">${a.sentence}</p>
+          <button class="btn btn-primary btn-block" type="button" data-action="practice">${a.fresh.length ? 'Practice this topic' : 'Retry missed questions'} ${icon.arrow}</button>
+          <p class="note">${note}</p>
+        </section>`;
+      review = `
+        <div class="review">
+          <button class="review-toggle" type="button" data-action="toggle-review" aria-expanded="false" aria-controls="missed-panel">
+            <span>Review missed questions (${a.missed.length})</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="reveal" id="missed-panel" hidden><div><ul class="items">${itemList(a.missed)}</ul></div></div>
+        </div>`;
+      actions = `
+        <button class="btn btn-secondary" type="button" data-action="retry">Restart chapter <span aria-hidden="true">↻</span></button>
+        <button class="link-btn" type="button" data-action="chapters">${icon.back} Choose another chapter</button>`;
+    } else {
+      focus = `<section class="focus" aria-labelledby="review-topic">
+          <p class="eyebrow">All clear</p>
+          <h2 id="review-topic">Nothing to review</h2>
+          <p class="why">You got all ${a.total} right on Chapter ${c.number}.${nextCh ? ` Chapter ${nextCh.number} is next.` : ' That was the last chapter.'}</p>
+          ${nextCh
+            ? `<button class="btn btn-primary btn-block" type="button" data-action="next-chapter">Start Chapter ${nextCh.number} ${icon.arrow}</button>`
+            : `<button class="btn btn-primary btn-block" type="button" data-action="chapters">Back to chapters ${icon.arrow}</button>`}
+        </section>`;
+      actions = nextCh ? `<button class="link-btn" type="button" data-action="chapters">${icon.back} Back to chapters</button>` : '';
+    }
+
+    mount(`
+      <div class="column results">
+        <p class="eyebrow">Chapter ${c.number} · ${c.title}</p>
+        <h1 class="score" id="score" tabindex="-1"><span class="big">${a.correct}</span><span class="rest">of ${a.total} correct</span></h1>
+        ${focus}
+        ${review}
+        ${actions ? `<div class="actions">${actions}</div>` : ''}
+      </div>`, 'results', '#score');
+  }
+
+  function renderPracticeResults() {
+    const run = state.run, c = CHAPTERS[run.chapter], topic = c.topics[run.topic];
+    const entries = run.questions.map((q, i) => ({ q, i, pick: run.picks[i] }));
+    const correct = entries.filter(m => m.pick === m.q.answer).length, total = entries.length;
+    const base = analyze(state.chapterRun);
+    const line = correct === total
+      ? `${total === 1 ? 'Right' : total === 2 ? 'Both right' : `All ${total} right`}. ${topic.name} is back on track.`
+      : `You missed ${total - correct} of ${total}. ${reviewLine(topic)}`;
+
+    mount(`
+      <div class="column results">
+        <p class="eyebrow">${runLabel(run)}</p>
+        <h1 class="score" id="score" tabindex="-1"><span class="big">${correct}</span><span class="rest">of ${total} correct</span></h1>
+        <p class="separate">Tracked separately. Your Chapter ${c.number} score stays ${base.correct} of ${base.total}.</p>
+        <section class="focus" aria-labelledby="practice-topic">
+          <h2 id="practice-topic">${topic.name}</h2>
+          <p class="why">${line}</p>
+          <button class="btn btn-primary btn-block" type="button" data-action="chapters">Return to chapters ${icon.arrow}</button>
+        </section>
+        <ul class="items" aria-label="Your answers">${itemList(entries)}</ul>
+        <div class="actions">
+          <button class="link-btn" type="button" data-action="back-results">${icon.back} Back to Chapter ${c.number} results</button>
+        </div>
+      </div>`, 'results', '#score');
+  }
+
+  function startTopicPractice() {
+    const a = analyze(state.chapterRun);
+    if (!a.missed.length) return;
+    startRun(a.fresh.length
+      ? { mode: 'practice', chapter: state.chapterRun.chapter, topic: a.topicKey, questions: a.fresh }
+      : { mode: 'retry', chapter: state.chapterRun.chapter, topic: a.topicKey, questions: a.retry });
+  }
+
+  function toggleReview(btn) {
+    const panel = document.getElementById('missed-panel');
+    const open = btn.getAttribute('aria-expanded') !== 'true';
+    btn.setAttribute('aria-expanded', String(open));
+    if (open) {
+      panel.hidden = false;
+      requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add('open')));
+    } else {
+      panel.classList.remove('open');
+      if (reduceMotion.matches) panel.hidden = true;
+      else panel.addEventListener('transitionend', () => { if (!panel.classList.contains('open')) panel.hidden = true; }, { once: true });
+    }
+  }
+
+  /* ---------- Events ---------- */
+  app.addEventListener('change', e => {
+    if (e.target.name === 'chapter') selectChapter(Number(e.target.value));
+  });
+  app.addEventListener('click', e => {
+    const el = e.target.closest('[data-action]');
+    if (!el || el.disabled) return;
+    switch (el.dataset.action) {
+      case 'start': {
+        // Read the checked radio directly so Start never lags the selection.
+        const checked = app.querySelector('input[name="chapter"]:checked');
+        startChapter(checked ? Number(checked.value) : state.chapter);
+        break;
+      }
+      case 'pick': pick(Number(el.dataset.i)); break;
+      case 'next': next(); break;
+      case 'exit': exitQuiz(); break;
+      case 'practice': startTopicPractice(); break;
+      case 'retry': startChapter(state.chapterRun.chapter); break;
+      case 'next-chapter': startChapter(state.chapterRun.chapter + 1); break;
+      case 'back-results': renderResults(); break;
+      case 'toggle-review': toggleReview(el); break;
+      case 'chapters': renderStart(); break;
+    }
+  });
+  // Keyboard shortcuts in the quiz: A–D or 1–4 to answer.
+  document.addEventListener('keydown', e => {
+    if (document.body.dataset.screen !== 'quiz' || e.altKey || e.ctrlKey || e.metaKey) return;
+    const k = e.key.toLowerCase();
+    const i = 'abcd'.indexOf(k) >= 0 ? 'abcd'.indexOf(k) : '1234'.indexOf(k);
+    if (i >= 0 && i < state.run.questions[state.run.index].choices.length && state.run.picks[state.run.index] == null) {
+      e.preventDefault();
+      pick(i);
+    }
+  });
+  // Browsers may restore a different radio on back/forward; keep the summary in sync.
+  window.addEventListener('pageshow', () => {
+    const checked = app.querySelector('input[name="chapter"]:checked');
+    if (checked && Number(checked.value) !== state.chapter) selectChapter(Number(checked.value));
+  });
+
+  renderStart();
+  </script>
+</body>
+</html>

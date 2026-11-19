@@ -1,0 +1,27 @@
+/* Course library: course heading over a row of chapter tiles. */
+.library { width: var(--page); margin-inline: auto; padding: clamp(40px, 7vw, 96px) 0 80px; }
+
+.course-head { display: grid; gap: 12px; margin-bottom: clamp(32px, 5vw, 56px); }
+.course-title { font: 800 var(--fs-h1)/1 var(--font-display); letter-spacing: -.04em; }
+.course-lede { font-size: var(--fs-18); color: var(--ink-2); }
+
+.tiles { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.tile {
+  display: flex; flex-direction: column; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-2); overflow: hidden;
+  transition: border-color var(--t-fast) ease, box-shadow 200ms ease;
+}
+.tile:hover, .tile:focus-within { border-color: var(--line-2); box-shadow: 0 10px 28px -18px rgba(15, 18, 22, .35); }
+.tile-art { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--art-bg); border-bottom: 1px solid var(--line); }
+/* Absolutely positioned so the SVG's own proportions can't stretch the box past its aspect ratio. */
+.tile-art svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.tile-body { flex: 1; display: flex; flex-direction: column; padding: 20px 20px 22px; }
+.tile-num { font-size: var(--fs-14); font-weight: 650; color: var(--ink-3); margin-bottom: 4px; }
+.tile-title { font: 750 var(--fs-20)/1.25 var(--font-display); letter-spacing: -.015em; overflow-wrap: anywhere; }
+.tile-meta { margin: 8px 0 22px; font-size: var(--fs-14); color: var(--ink-2); }
+.tile .btn { margin-top: auto; }
+
+@media (max-width: 860px) {
+  .tiles { grid-template-columns: 1fr; gap: 16px; }
+  .tile-art { aspect-ratio: 5 / 2; }
+}

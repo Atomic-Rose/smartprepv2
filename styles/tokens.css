@@ -1,0 +1,61 @@
+/* Design tokens. Cobalt is the single action color; green appears only for correct answers. */
+:root {
+  color-scheme: light;
+
+  /* Neutrals */
+  --canvas: #f4f4f2;
+  --surface: #ffffff;
+  --ink: #0f1216;
+  --ink-2: #474e57;
+  --ink-3: #6a717a;
+  --line: #e2e3df;
+  --line-2: #c8cac5;
+  --hover: rgba(15, 18, 22, .035);
+  --press: rgba(15, 18, 22, .07);
+  --disabled: #e6e7e3;
+  --art-bg: #eceef4;
+
+  /* Action */
+  --cobalt: #2346d1;
+  --cobalt-hover: #1c3bb5;
+  --cobalt-press: #162f94;
+
+  /* Feedback */
+  --correct: #157a3a;
+  --correct-bg: #e8f5ed;
+  --wrong: #b6362a;
+  --wrong-bg: #fbecea;
+
+  /* Type */
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif;
+  --fs-12: .75rem;
+  --fs-14: .875rem;
+  --fs-16: 1rem;
+  --fs-18: 1.125rem;
+  --fs-20: 1.25rem;
+  --fs-24: 1.5rem;
+  --fs-q: clamp(1.5rem, 1.15rem + 1.5vw, 2.125rem);
+  --fs-h1: clamp(2.5rem, 1.7rem + 3.4vw, 4.25rem);
+  --fs-score: clamp(5.5rem, 3rem + 10vw, 10rem);
+
+  /* Layout */
+  --page: min(1120px, calc(100% - 48px));
+  --lesson: min(680px, calc(100% - 48px));
+  --lesson-wide: min(1120px, calc(100% - 64px));
+  --r-1: 8px;
+  --r-2: 14px;
+
+  /* Motion */
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --t-fast: 120ms;
+  --t-screen: 200ms;
+  --t-progress: 450ms;
+}
+
+@media (max-width: 560px) {
+  :root {
+    --page: calc(100% - 32px);
+    --lesson: calc(100% - 32px);
+  }
+}
